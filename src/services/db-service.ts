@@ -1,0 +1,15 @@
+import { db } from '@libs/db';
+import { sql } from 'bun';
+
+export async function getById<T>(id: string | number) {
+  const result = await db<T[]>`SELECT * FROM users WHERE id = ${id}`;
+  return result[0];
+}
+
+export async function insert<T>(table: string, data: object) {
+  const result = await db<
+    T[]
+  >`INSERT INTO ${sql(table)} ${sql(data)} RETURNING *`;
+
+  return result[0];
+}
