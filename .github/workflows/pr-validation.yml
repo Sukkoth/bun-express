@@ -30,7 +30,7 @@ jobs:
         run: bun lint
 
       - name: Run build
-        run: bun build
+        run: bun run build
 
       - name: Validation successful
         run: echo "All checks passed successfully!"
