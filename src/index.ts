@@ -29,9 +29,10 @@ async function startServers() {
   // Use routes
   app.use('/', indexRouter);
 
+  // Start Apollo Server
   await apolloServer.start();
 
-  // attach apollo server to express app
+  // Attach Apollo Server to Express app
   apolloServer.applyMiddleware({ app });
 
   // attach middleware to respond to non existing routes
