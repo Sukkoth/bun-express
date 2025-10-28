@@ -7,33 +7,43 @@ import indexRouter from '@routes/index-router';
 import { errorHandler } from '@middlewares/error-middleware';
 import { env } from '@libs/configs';
 import { contextMiddleware } from '@middlewares/context-middleware';
+import { notFoundMiddleware } from '@middlewares/not-found-middleware';
 
-const app = express();
-app.use(contextMiddleware);
+import { apolloServer } from '@/graphql/apollo-server';
 
-const port = env.APP_PORT;
+async function startServers() {
+  const app = express();
 
-// Add JSON middleware to parse incoming requests
-app.use(express.json({ limit: '250kb' }));
-// Use Helmet to secure Express app by setting various HTTP headers
-app.use(helmet());
-// Enable CORS with various options
-app.use(cors());
-// Use Morgan middleware for logging requests
-app.use(morganMiddleware);
-// Use routes
-app.use('/', indexRouter);
+  app.use(contextMiddleware);
 
-app.use(errorHandler);
+  const port = env.APP_PORT;
 
-// Start the server and export the server instance
-const server = app.listen(port, () => {
-  if (env.NODE_ENV === 'development') {
-    console.log(`Server is running on http://localhost:${port}`);
-  } else {
-    console.log(`Server is running on ${env.BASE_URL}`);
-  }
-});
+  // Add JSON middleware to parse incoming requests
+  app.use(express.json({ limit: '250kb' }));
+  // Use Helmet to secure Express app by setting various HTTP headers
+  app.use(helmet());
+  // Enable CORS with various options
+  app.use(cors());
+  // Use Morgan middleware for logging requests
+  app.use(morganMiddleware);
+  // Use routes
+  app.use('/', indexRouter);
 
-// Export both the app and the server for testing later
-export { app, server };
+  await apolloServer.start();
+
+  // attach apollo server to express app
+  apolloServer.applyMiddleware({ app });
+
+  app.use(notFoundMiddleware);
+  app.use(errorHandler);
+
+  app.listen(port, () => {
+    if (env.NODE_ENV === 'development') {
+      console.log(`Server is running on http://localhost:${port}`);
+    } else {
+      console.log(`Server is running on ${env.BASE_URL}`);
+    }
+  });
+}
+
+startServers();
