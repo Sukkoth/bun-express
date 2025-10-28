@@ -1,0 +1,1 @@
+pnpm exec lint-staged # Runs lint-staged on staged files

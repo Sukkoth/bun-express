@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "target": "es2021" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+
+    /* Modules */
+    "module": "commonjs" /* Specify what module code is generated. */,
+    "rootDir": "." /* Specify the root folder within your source files. */,
+    "typeRoots": [
+      "./src/types",
+      "./node_modules/@types"
+    ] /* Specify multiple folders that act like './node_modules/@types'. */,
+
+    /* JavaScript Support */
+    "baseUrl": "." /* Specify the base directory to resolve non-relative module names. */,
+    "paths": {
+      "@middlewares/*": ["./src/middlewares/*"], // Path alias for middlewares
+      "@controllers/*": ["./src/controllers/*"], // Path alias for controllers
+      "@routes/*": ["./src/routes/*"], // Path alias for routes
+      "@libs/*": ["./src/libs/*"], // Path alias for libs
+      "@models/*": ["./src/models/*"], // Path alias for models
+      "@utils/*": ["./src/utils/*"], // Path alias for utils
+      "@services/*": ["./src/services/*"], // Path alias for services
+      "@/*": ["./src/*"] // Path alias for root src directory
+    } /* Specify a set of entries that re-map imports to additional lookup locations. */,
+
+    /* Interop Constraints */
+    "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
+    "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+
+    /* Type Checking */
+    "strict": true /* Enable all strict type-checking options. */,
+
+    /* Completeness */
+    "skipLibCheck": true /* Skip type checking all .d.ts files. */
+  },
+  "include": ["./src/**/*"],
+  "exclude": ["node_modules"]
+}
