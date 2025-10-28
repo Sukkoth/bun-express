@@ -34,7 +34,10 @@ async function startServers() {
   // attach apollo server to express app
   apolloServer.applyMiddleware({ app });
 
+  // attach middleware to respond to non existing routes
   app.use(notFoundMiddleware);
+
+  // attach middleware to handle errors globally
   app.use(errorHandler);
 
   app.listen(port, () => {
