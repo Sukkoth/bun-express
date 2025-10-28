@@ -3,6 +3,7 @@ import { env } from '@libs/configs';
 import { asyncLocalStorage } from '@libs/context';
 import { DateTime } from 'luxon';
 import { AxiosError } from 'axios';
+import path from 'path';
 
 // Define log levels
 const levels = {
@@ -98,7 +99,15 @@ const Logger = winston.createLogger({
   level: level(),
   levels,
   format: level() === 'debug' ? devFormat : jsonFormat,
-  transports: [new winston.transports.Console()],
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({
+      filename: path.join(process.cwd(), 'logs', 'app.log'),
+      maxsize: 524288000, // 500MB
+      maxFiles: 10,
+      format: jsonFormat,
+    }),
+  ],
 });
 
 export default Logger;
