@@ -5,7 +5,7 @@ export enum UserRole {
 
 export enum UserStatus {
   ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
+  BANNED = 'BANNED',
 }
 
 export interface User {
