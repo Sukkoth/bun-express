@@ -67,13 +67,11 @@ export class AppException extends Error {
     });
   }
 
-  public static unauthenticated(
-    params: Omit<AppExceptionParams, 'status' | 'code'>,
-  ): AppException {
+  public static unauthenticated(): AppException {
     return new AppException({
       status: 401,
       code: ErrorCodes.UNAUTHENTICATED,
-      ...params,
+      message: 'Unauthenticated',
     });
   }
 
