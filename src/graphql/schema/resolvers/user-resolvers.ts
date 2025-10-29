@@ -1,11 +1,18 @@
-import type { UserRole } from '@/types';
+import type { User, UserRole } from '@/types';
+import { AppException } from '@libs/exceptions/app-exception';
 import * as userService from '@services/user-service';
 import { registerUserSchema } from '@utils/validation/auth';
 import validate from '@utils/validation/validate';
 
 const userResolvers = {
   Query: {
-    getUserById: async (_: unknown, args: { userId: string }) => {
+    getUserById: async (
+      _: unknown,
+      args: { userId: string },
+      { user: currentUser }: { user?: User },
+    ) => {
+      if (!currentUser) throw AppException.unauthenticated();
+
       const user = await userService.getUserById(args.userId);
       return user;
     },
