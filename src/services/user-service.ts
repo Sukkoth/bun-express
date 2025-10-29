@@ -12,13 +12,22 @@ export async function getUserById(id: string) {
   return await dbService.getById<User | null>(id);
 }
 
+export async function getByField(args: Record<string, unknown>) {
+  const data = await dbService.getByField<User | null>(
+    'users',
+    Object.keys(args)[0],
+    Object.values(args)[0],
+  );
+
+  return data;
+}
+
 type CreateUserProps = {
   password: string;
   email: string;
   name: string;
   role?: UserRole;
 };
-
 export async function createUser(user: CreateUserProps) {
   const id = randomUUIDv7();
   const password = encryption.hash(user.password);

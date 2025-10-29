@@ -10,13 +10,14 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '@utils/jwt';
 import { AppException } from '@libs/exceptions/app-exception';
 import validate from '@utils/validation/validate';
-import { jwtAuthSchema } from '@utils/validation/jwt-auth-schema';
-import { prisma } from '@libs/prisma';
-import { SenderIdWithSmsCenter } from '@/types/types';
+import { jwtPayloadSchema } from '@utils/validation/auth';
 import Logger from '@libs/logger';
 import asyncHandler from '@utils/async-handler';
+import { getByField as getUserByField } from '@services/user-service';
+import { safeCall } from '@utils/safe-call';
+import { UserStatus } from '@/types';
 
-export const authenticateJWT = asyncHandler(
+export const authMiddleware = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     // Extract JWT from the Authorization header (format: Bearer <token>)
     const token = req.headers?.authorization?.split(' ')?.[1];
@@ -27,11 +28,7 @@ export const authenticateJWT = asyncHandler(
         context: 'AUTH-MIDDLEWARE',
         message: 'Token is missing',
       });
-      next(
-        AppException.unauthenticated({
-          message: 'Unauthenticated',
-        }),
-      );
+      next(AppException.unauthenticated());
       return;
     }
 
@@ -44,7 +41,7 @@ export const authenticateJWT = asyncHandler(
     });
 
     // Validate the JWT payload against the expected schema
-    const validatedPayload = validate(jwtAuthSchema, payload, {
+    const validatedPayload = validate(jwtPayloadSchema, payload, {
       throwOnError: false,
     });
 
@@ -56,86 +53,53 @@ export const authenticateJWT = asyncHandler(
         payload,
         issues: validatedPayload.error?.issues,
       });
-      next(
-        AppException.unauthenticated({
-          message: 'Unauthenticated',
-        }),
-      );
+      next(AppException.unauthenticated());
       return;
     }
 
-    // Check if company exists and is active
-    const company = await prisma.company.findUnique({
-      where: {
-        id: validatedPayload.data.companyId,
-      },
-    });
+    // Check if user exists and is active
+    const [error, user] = await safeCall(() =>
+      getUserByField({ id: validatedPayload.data.id }),
+    );
 
-    if (!company || company.status !== 'active') {
+    if (error) {
       Logger.error({
-        context: 'AUTH-MIDDLEWARE',
-        message: 'Company not found or not active',
-        company,
+        message: 'Error fetching user to check authentication',
+        error,
       });
       next(
-        AppException.unauthenticated({
-          message: 'Unauthenticated',
+        AppException.internalServerError({
+          message: 'Something went wrong',
+          cause: error,
         }),
       );
       return;
     }
-    Logger.info({
-      context: 'AUTH-MIDDLEWARE',
-      message: 'Company found and is active',
-      companyId: company.id,
-      companyName: company.name,
-      companyStatus: company.status,
-    });
 
-    // Check if sender ids exist and are active
-    const senderIds: SenderIdWithSmsCenter[] = await prisma.senderId.findMany({
-      where: {
-        OR: validatedPayload.data.vendors.map((vendor) => ({
-          id: vendor.senderId,
-          status: 'active',
-          smsCenter: {
-            status: 'active',
-          },
-        })),
-      },
-      include: {
-        smsCenter: true,
-      },
-    });
-
-    // If active sender ids are not found, fail authentication
-    if (!senderIds.length) {
+    if (!user || !user[0]) {
       Logger.error({
-        context: 'AUTH-MIDDLEWARE',
-        message: 'Sender ids not found or not active',
-        senderIds,
+        message: 'User not found',
+        userId: validatedPayload.data.id,
       });
-      next(
-        AppException.unauthenticated({
-          message: 'Unauthenticated',
-        }),
-      );
+      next(AppException.unauthenticated());
       return;
     }
+
+    if (user[0].status !== UserStatus.ACTIVE) {
+      Logger.error({
+        message: 'User is not active',
+        status: user[0].status,
+      });
+
+      next(AppException.unauthenticated());
+      return;
+    }
+
     Logger.info({
       context: 'AUTH-MIDDLEWARE',
-      message: 'Sender ids found',
-      senderIds: senderIds.map((senderId) => ({
-        senderId: senderId.id,
-        senderIdName: senderId.name,
-        senderIdStatus: senderId.status,
-        smsCenterId: senderId.smsCenter?.id,
-        smsCenterStatus: senderId.smsCenter?.status,
-      })),
+      message: 'user found and is active',
+      user: { ...user[0], password: '********' },
     });
-
-    // Attach sender ids to the request
-    req.config = senderIds;
 
     next();
   },
