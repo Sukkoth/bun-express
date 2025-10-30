@@ -4,10 +4,12 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morganMiddleware from '@middlewares/morgan-middleware';
 import indexRouter from '@routes/index-router';
+import authRouter from '@routes/auth-router';
 import { errorHandler } from '@middlewares/error-middleware';
 import { env } from '@libs/configs';
 import { contextMiddleware } from '@middlewares/context-middleware';
 import { notFoundMiddleware } from '@middlewares/not-found-middleware';
+import cookieParser from 'cookie-parser';
 
 import { apolloServer } from '@/graphql/apollo-server';
 
@@ -15,6 +17,7 @@ async function startServers() {
   const app = express();
 
   app.use(contextMiddleware);
+  app.use(cookieParser());
 
   const port = env.APP_PORT;
 
@@ -28,6 +31,7 @@ async function startServers() {
   app.use(morganMiddleware);
   // Use routes
   app.use('/', indexRouter);
+  app.use('/auth', authRouter);
 
   // Start Apollo Server
   await apolloServer.start();
