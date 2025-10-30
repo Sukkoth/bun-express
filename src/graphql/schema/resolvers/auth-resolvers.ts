@@ -1,7 +1,7 @@
 import { User, UserRole, UserStatus } from '@/types';
 import { AppException } from '@libs/exceptions/app-exception';
 import * as authService from '@services/auth-service';
-import { checkUserPermissions } from '@utils/check-permissions';
+import { checkUserStatus } from '@utils/check-user-status';
 import {
   adminResetPasswordForUserSchema,
   adminUpdateUserStatusSchema,
@@ -39,7 +39,7 @@ export default {
     ) => {
       if (!user) throw AppException.unauthenticated();
 
-      checkUserPermissions({ user, requiredRole: [UserRole.ADMIN] });
+      checkUserStatus({ user, requiredRole: [UserRole.ADMIN] });
 
       const data = validate(adminUpdateUserStatusSchema, args);
 
@@ -63,7 +63,7 @@ export default {
     ) => {
       if (!user) throw AppException.unauthenticated();
 
-      checkUserPermissions({ user, requiredRole: [UserRole.ADMIN] });
+      checkUserStatus({ user, requiredRole: [UserRole.ADMIN] });
 
       const data = validate(adminResetPasswordForUserSchema, args);
 

@@ -1,9 +1,12 @@
-import { User, UserRole } from '@/types';
+import { User, UserRole, WorkspaceRole } from '@/types';
 import { AppException } from '@libs/exceptions/app-exception';
 import validate from '@utils/validation/validate';
-import { workspaceCreateSchema } from '@utils/validation/workspace';
+import {
+  workspaceCreateSchema,
+  workspaceMemberCreateSchema,
+} from '@utils/validation/workspace';
 import * as workspaceService from '@services/workspace-service';
-import { checkUserPermissions } from '@utils/check-permissions';
+import { checkUserStatus } from '@utils/check-user-status';
 
 export default {
   Query: {
@@ -13,7 +16,7 @@ export default {
       { user }: { user?: User },
     ) => {
       if (!user) throw AppException.unauthenticated();
-      checkUserPermissions({
+      checkUserStatus({
         user,
         requiredRole: [UserRole.USER],
       });
@@ -38,7 +41,25 @@ export default {
         ...data,
       });
     },
-    // addWorkspaceMember: () => {},
+    addWorkspaceMember: async (
+      _: unknown,
+      args: { workspaceId?: string; userId?: string; role?: WorkspaceRole },
+      { user }: { user?: User },
+    ) => {
+      if (!user) throw AppException.unauthenticated();
+      checkUserStatus({
+        user,
+        requiredRole: [UserRole.USER],
+      });
+
+      const data = validate(workspaceMemberCreateSchema, args);
+
+      return await workspaceService.addWorkspaceMember({
+        currentUser: user,
+        ...data,
+      });
+    },
+
     // removeWorkspaceMember: () => {},
     // updateWorkspaceMemberRole: () => {},
     // getWorkspace: () => {},

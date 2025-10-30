@@ -14,7 +14,7 @@ import Logger from '@libs/logger';
 import { safeCall } from '@utils/safe-call';
 import * as emailService from '@services/email-service';
 import * as dbService from '@services/db-service';
-import { checkUserPermissions } from '@utils/check-permissions';
+import { checkUserStatus } from '@utils/check-user-status';
 import { env } from '@libs/configs';
 
 export async function login({ email, password }: LoginSchema) {
@@ -24,7 +24,7 @@ export async function login({ email, password }: LoginSchema) {
     throw AppException.unauthenticated();
   }
 
-  checkUserPermissions({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
+  checkUserStatus({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
 
   const isMatch = encryption.compareHash(password, user.password);
 
@@ -82,7 +82,7 @@ export async function refreshToken(refreshToken: string) {
     throw AppException.unauthenticated();
   }
 
-  checkUserPermissions({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
+  checkUserStatus({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
 
   return generateTokens(user);
 }
@@ -134,7 +134,7 @@ export async function forgotPassword(email: string) {
 
   const user = data[0];
 
-  checkUserPermissions({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
+  checkUserStatus({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
 
   const token = jwtUtils.generateToken({
     payload: { id: user.id },
@@ -213,7 +213,7 @@ export async function resetPassword({ token, password }: ResetPasswordProps) {
 
   const user = data[0];
 
-  checkUserPermissions({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
+  checkUserStatus({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
 
   /** Take the latest token the user generated for password reset */
   const fetchedToken = tokenFromDb?.[tokenFromDb.length - 1];
