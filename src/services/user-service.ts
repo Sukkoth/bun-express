@@ -12,13 +12,13 @@ export async function getUserById(id: string) {
   return await dbService.getById<User | null>(id);
 }
 
+/** Get a user via ID */
 export async function getByField(args: Record<string, unknown>) {
   const data = await dbService.getByField<User | null>(
     'users',
     Object.keys(args)[0],
     Object.values(args)[0],
   );
-
   return data;
 }
 
@@ -28,10 +28,11 @@ type CreateUserProps = {
   name: string;
   role?: UserRole;
 };
+
 export async function createUser(user: CreateUserProps) {
   const id = randomUUIDv7();
   const password = encryption.hash(user.password);
-  const now = new Date(new Date()); //UTC time
+  const now = new Date(Date.now()); //UTC time
 
   const [error, data] = await safeCall(() =>
     dbService.insert<User>('users', {
@@ -52,7 +53,12 @@ export async function createUser(user: CreateUserProps) {
     });
 
     if (error instanceof SQL.PostgresError) {
+      /**
+       * This error shows that there is a a column with the same unique field
+       * (e.g. email) ,so check it and throw validation error
+       */
       if (error.errno === '23505') {
+        // this is postgres specific error
         const match = error.detail?.match(/Key \((\w+)\)=\(([^)]+)\) (.+)/);
         if (match) {
           const [, field, , message] = match;
@@ -79,4 +85,32 @@ export async function createUser(user: CreateUserProps) {
   });
 
   return data;
+}
+
+export async function updateUser(id: string | number, data: Partial<User>) {
+  const [error, result] = await safeCall(() =>
+    dbService.update<User>('users', id, data),
+  );
+
+  if (error) {
+    Logger.error({
+      message: 'Failed to update user',
+      code: ErrorCodes.DB_QUERY_FAILED,
+      status: 500,
+      error,
+    });
+
+    throw new AppException({
+      message: 'Failed to update user',
+      code: ErrorCodes.DB_QUERY_FAILED,
+      status: 500,
+    });
+  }
+
+  Logger.info({
+    message: 'User updated',
+    data: { ...result, password: '********' },
+  });
+
+  return result;
 }

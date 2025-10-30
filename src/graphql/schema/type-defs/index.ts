@@ -1,3 +1,4 @@
-import userDefs from './user';
+import userDefs from '@/graphql/schema/type-defs/user';
+import authDefs from '@/graphql/schema/type-defs/auth';
 
-export default [userDefs];
+export default [userDefs, authDefs];

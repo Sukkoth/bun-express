@@ -24,3 +24,23 @@ export async function insert<T>(table: string, data: object) {
 
   return result[0];
 }
+
+export async function update<T>(
+  table: string,
+  id: string | number,
+  data: Partial<T>,
+) {
+  const result = await db<
+    T[]
+  >`UPDATE ${sql(table)} SET ${sql(data)} WHERE id = ${id} RETURNING *`;
+
+  return result[0];
+}
+
+export async function remove<T>(table: string, id: string | number) {
+  const result = await db<
+    T[]
+  >`DELETE FROM ${sql(table)} WHERE id = ${id} RETURNING *`;
+
+  return result[0];
+}

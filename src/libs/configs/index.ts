@@ -66,6 +66,16 @@ export const envSchema = z.object({
     .min(10, 'ENCRYPTION_IV must be at least 10 characters long'),
 
   HASH_SALT: z.coerce.number().min(10, 'HASH_SALT is required').default(10),
+
+  BREVO_API_KEY: z.string({
+    required_error: 'BREVO_API_KEY is required',
+  }),
+
+  BREVO_SENDER_EMAIL: z
+    .string({
+      required_error: 'BREVO_SENDER_EMAIL is required',
+    })
+    .email(),
 });
 
 // Validate and parse process.env at runtime

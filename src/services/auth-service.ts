@@ -3,9 +3,12 @@ import * as userService from '@services/user-service';
 import encryption from '@libs/encryption';
 import { AppException } from '@libs/exceptions/app-exception';
 import * as jwtUtils from '@utils/jwt';
-import { User } from '@/types';
+import { PasswordResetToken, User } from '@/types';
 import validate from '@utils/validation/validate';
 import Logger from '@libs/logger';
+import { safeCall } from '@utils/safe-call';
+import * as emailService from '@services/email-service';
+import * as dbService from '@services/db-service';
 
 export async function login({ email, password }: LoginSchema) {
   const user = (await userService.getByField({ email }))?.[0];
@@ -97,4 +100,161 @@ export function generateTokens(user: User) {
   });
 
   return { accessToken, refreshToken };
+}
+
+export async function forgotPassword(email: string) {
+  const [error, data] = await safeCall(() => userService.getByField({ email }));
+
+  if (error) {
+    Logger.error({
+      message: 'Error fetching user for forgot password',
+      error,
+    });
+    throw AppException.internalServerError({ message: 'Something Went Wrong' });
+  }
+
+  if (!data || !data[0]) {
+    Logger.error({
+      message: 'User not found',
+      email,
+    });
+    throw AppException.notFound({ message: 'User not found' });
+  }
+
+  const user = data[0];
+
+  const token = jwtUtils.generateToken({
+    payload: { id: user.id },
+    expiresIn: '10m',
+  });
+
+  await dbService.insert('password_reset_tokens', {
+    userId: user.id,
+    token,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    used: false,
+    createdAt: new Date(),
+  });
+
+  const passwordResetEmailTemplate = emailService.generateEmailTemplate(
+    'forgotPassword',
+    {
+      token,
+    },
+  );
+
+  await emailService.sendEmail({
+    to: email,
+    clientName: user.name,
+    subject: 'Password Reset',
+    html: passwordResetEmailTemplate,
+  });
+
+  Logger.info({
+    message: 'Password reset email sent',
+    email,
+    user,
+  });
+}
+
+type ResetPasswordProps = {
+  token: string;
+  password: string;
+};
+
+export async function resetPassword({ token, password }: ResetPasswordProps) {
+  /** Validate the token integrity and extract the user id if the token is valid */
+  const validateToken = jwtUtils.verifyToken<{ id: string }>(token);
+
+  /** Get the user based on the id extracted */
+  const [error, data] = await safeCall(() =>
+    userService.getByField({ id: validateToken.id }),
+  );
+
+  /** Get the token if the user has one */
+  const [tokenFetchError, tokenFromDb] = await safeCall(() =>
+    dbService.getByField<PasswordResetToken>(
+      'password_reset_tokens',
+      'userId',
+      validateToken.id,
+    ),
+  );
+
+  if (error || tokenFetchError) {
+    Logger.error({
+      message: error
+        ? 'Error fetching user for reset password'
+        : 'Error fetching existing token for reset password',
+      error,
+    });
+    throw AppException.internalServerError({ message: 'Something Went Wrong' });
+  }
+
+  if (!data || !data[0]) {
+    Logger.error({
+      message: 'User not found',
+      token,
+    });
+    throw AppException.notFound({ message: 'User not found' });
+  }
+
+  const user = data[0];
+
+  /** Take the latest token the user generated for password reset */
+  const fetchedToken = tokenFromDb?.[tokenFromDb.length - 1];
+
+  Logger.info({
+    fetchedToken,
+    expired: new Date(fetchedToken.expiresAt).getTime() < Date.now(),
+    now: new Date(Date.now()),
+  });
+
+  if (!tokenFromDb || !fetchedToken) {
+    Logger.error({
+      message: 'Token not found, abort resetting password',
+      user: data[0],
+      tokenFromDb: tokenFromDb[tokenFromDb.length - 1],
+      token,
+    });
+
+    throw AppException.badRequest({
+      message: 'Invalid Password reset request',
+    });
+  }
+
+  /** Check if the reset token has expired or used */
+  if (
+    fetchedToken.token !== token ||
+    fetchedToken.used ||
+    new Date(fetchedToken.expiresAt).getTime() < Date.now()
+  ) {
+    Logger.error({
+      message: 'Token expired or invalid',
+      user,
+      token,
+      tokenFromDb,
+    });
+
+    throw AppException.badRequest({
+      message: 'Invalid Password reset request',
+    });
+  }
+
+  /** Update the token status to used */
+
+  const hashedPassword = encryption.hash(password);
+
+  await Promise.all([
+    userService.updateUser(user.id, { password: hashedPassword }),
+    dbService.update<PasswordResetToken>(
+      'password_reset_tokens',
+      fetchedToken.id,
+      { used: true },
+    ),
+  ]);
+
+  Logger.info({
+    message: 'Password reset successful',
+    user,
+  });
 }

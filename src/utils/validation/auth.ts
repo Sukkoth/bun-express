@@ -13,6 +13,15 @@ export const loginUserSchema = z.object({
   password: z.string().min(6).max(100),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().jwt(),
+  password: z.string().min(6).max(100),
+});
+
 export const jwtPayloadSchema = z.object({
   id: z.string().uuid(),
   role: z.nativeEnum(UserRole),
@@ -23,3 +32,7 @@ export type RegisterSchema = z.infer<typeof registerUserSchema>;
 export type LoginSchema = z.infer<typeof loginUserSchema>;
 
 export type JwtPayloadSchema = z.infer<typeof jwtPayloadSchema>;
+
+export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
+
+export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;
