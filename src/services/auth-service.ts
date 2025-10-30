@@ -1,14 +1,19 @@
-import { jwtPayloadSchema, LoginSchema } from '@utils/validation/auth';
+import {
+  AdminUpdateUserStatusSchema,
+  jwtPayloadSchema,
+  LoginSchema,
+} from '@utils/validation/auth';
 import * as userService from '@services/user-service';
 import encryption from '@libs/encryption';
 import { AppException } from '@libs/exceptions/app-exception';
 import * as jwtUtils from '@utils/jwt';
-import { PasswordResetToken, User } from '@/types';
+import { PasswordResetToken, User, UserRole } from '@/types';
 import validate from '@utils/validation/validate';
 import Logger from '@libs/logger';
 import { safeCall } from '@utils/safe-call';
 import * as emailService from '@services/email-service';
 import * as dbService from '@services/db-service';
+import { checkUserPermissions } from '@utils/check-permissions';
 
 export async function login({ email, password }: LoginSchema) {
   const user = (await userService.getByField({ email }))?.[0];
@@ -16,6 +21,8 @@ export async function login({ email, password }: LoginSchema) {
   if (!user) {
     throw AppException.unauthenticated();
   }
+
+  checkUserPermissions({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
 
   const isMatch = encryption.compareHash(password, user.password);
 
@@ -73,6 +80,8 @@ export async function refreshToken(refreshToken: string) {
     throw AppException.unauthenticated();
   }
 
+  checkUserPermissions({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
+
   return generateTokens(user);
 }
 
@@ -122,6 +131,8 @@ export async function forgotPassword(email: string) {
   }
 
   const user = data[0];
+
+  checkUserPermissions({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
 
   const token = jwtUtils.generateToken({
     payload: { id: user.id },
@@ -200,6 +211,8 @@ export async function resetPassword({ token, password }: ResetPasswordProps) {
 
   const user = data[0];
 
+  checkUserPermissions({ user, requiredRole: [UserRole.ADMIN, UserRole.USER] });
+
   /** Take the latest token the user generated for password reset */
   const fetchedToken = tokenFromDb?.[tokenFromDb.length - 1];
 
@@ -256,5 +269,41 @@ export async function resetPassword({ token, password }: ResetPasswordProps) {
   Logger.info({
     message: 'Password reset successful',
     user,
+  });
+}
+
+export async function updateUserStatus({
+  email,
+  status,
+  updatedBy,
+}: AdminUpdateUserStatusSchema & {
+  updatedBy: string;
+}) {
+  const [error, data] = await safeCall(() => userService.getByField({ email }));
+
+  if (error) {
+    Logger.error({
+      message: 'Error fetching user',
+      email,
+      error,
+    });
+    throw AppException.internalServerError({ message: 'Something went wrong' });
+  }
+
+  if (!data || !data?.[0]) {
+    Logger.error({
+      message: 'User not found',
+      email,
+    });
+    throw AppException.notFound({ message: 'User not found' });
+  }
+
+  await userService.updateUser(data[0].id, { status });
+
+  Logger.info({
+    message: 'User status updated',
+    updatedBy,
+    email: data[0].email,
+    userName: data[0].name,
   });
 }

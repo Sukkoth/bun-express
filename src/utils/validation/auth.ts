@@ -1,4 +1,4 @@
-import { UserRole } from '@/types';
+import { UserRole, UserStatus } from '@/types';
 import { z } from 'zod';
 
 export const registerUserSchema = z.object({
@@ -27,6 +27,11 @@ export const jwtPayloadSchema = z.object({
   role: z.nativeEnum(UserRole),
 });
 
+export const adminUpdateUserStatusSchema = z.object({
+  email: z.string().email(),
+  status: z.nativeEnum(UserStatus),
+});
+
 export type RegisterSchema = z.infer<typeof registerUserSchema>;
 
 export type LoginSchema = z.infer<typeof loginUserSchema>;
@@ -36,3 +41,7 @@ export type JwtPayloadSchema = z.infer<typeof jwtPayloadSchema>;
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
 
 export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;
+
+export type AdminUpdateUserStatusSchema = z.infer<
+  typeof adminUpdateUserStatusSchema
+>;

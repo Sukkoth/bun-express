@@ -1,6 +1,7 @@
-import type { User, UserRole } from '@/types';
+import { User, UserRole } from '@/types';
 import { AppException } from '@libs/exceptions/app-exception';
 import * as userService from '@services/user-service';
+import { checkUserPermissions } from '@utils/check-permissions';
 import { registerUserSchema } from '@utils/validation/auth';
 import validate from '@utils/validation/validate';
 
@@ -13,8 +14,20 @@ const userResolvers = {
     ) => {
       if (!currentUser) throw AppException.unauthenticated();
 
-      const user = await userService.getUserById(args.userId);
-      return user;
+      /**
+       * If the current user is not an admin and the requested user ID does not
+       * match the current user's ID, the request should not be permitted
+       */
+      const userCanCheckProfile =
+        currentUser.role === UserRole.ADMIN || currentUser.id === args.userId;
+
+      checkUserPermissions({
+        user: currentUser,
+        requiredRole: [UserRole.ADMIN, UserRole.USER],
+        extraConditions: userCanCheckProfile,
+      });
+
+      return await userService.getUserById(args.userId);
     },
   },
 
