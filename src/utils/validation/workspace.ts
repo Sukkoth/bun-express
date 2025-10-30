@@ -12,7 +12,24 @@ export const workspaceMemberCreateSchema = z.object({
   role: z.nativeEnum(WorkspaceRole),
 });
 
+export const workspaceMemberRemoveSchema = z.object({
+  email: z.string().email(),
+  workspaceId: z.string().uuid(),
+});
+
+export const workspaceMemberUpdateRoleSchema = z.object({
+  email: z.string().email(),
+  workspaceId: z.string().uuid(),
+  role: z.nativeEnum(WorkspaceRole),
+});
+
 export type WorkspaceCreateSchema = z.infer<typeof workspaceCreateSchema>;
 export type WorkspaceMemberCreateSchema = z.infer<
   typeof workspaceMemberCreateSchema
+>;
+export type WorkspaceMemberRemoveSchema = z.infer<
+  typeof workspaceMemberRemoveSchema
+>;
+export type WorkspaceMemberUpdateRoleSchema = z.infer<
+  typeof workspaceMemberUpdateRoleSchema
 >;

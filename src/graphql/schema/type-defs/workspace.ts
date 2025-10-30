@@ -26,7 +26,7 @@ export default gql`
 
   type Query {
     getWorkspace(id: ID!): Workspace
-    #   getAllWorkspaces: [Workspace!]!
+    getAllWorkspaces: [Workspace!]!
   }
 
   type Mutation {
@@ -38,11 +38,11 @@ export default gql`
       email: String!
       role: WorkspaceRole!
     ): WorkspaceMembership!
-    # removeWorkspaceMember(workspaceId: ID!, userId: ID!): Boolean!
-    # updateWorkspaceMemberRole(
-    #   workspaceId: ID!
-    #   userId: ID!
-    #   role: WorkspaceRole!
-    # ): WorkspaceMembership!
+    removeWorkspaceMember(workspaceId: ID!, email: String!): Boolean!
+    updateWorkspaceMemberRole(
+      workspaceId: ID!
+      email: String!
+      role: WorkspaceRole!
+    ): WorkspaceMembership!
   }
 `;

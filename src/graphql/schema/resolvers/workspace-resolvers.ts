@@ -4,6 +4,8 @@ import validate from '@utils/validation/validate';
 import {
   workspaceCreateSchema,
   workspaceMemberCreateSchema,
+  workspaceMemberRemoveSchema,
+  workspaceMemberUpdateRoleSchema,
 } from '@utils/validation/workspace';
 import * as workspaceService from '@services/workspace-service';
 import { checkUserStatus } from '@utils/check-user-status';
@@ -25,6 +27,19 @@ export default {
         user: user,
         workspaceId: args.id,
       });
+    },
+    getAllWorkspaces: async (
+      _: unknown,
+      args: { id: string },
+      { user }: { user?: User },
+    ) => {
+      if (!user) throw AppException.unauthenticated();
+      checkUserStatus({
+        user,
+        requiredRole: [UserRole.ADMIN],
+      });
+
+      return await workspaceService.getAllWorkspaces();
     },
   },
   Mutation: {
@@ -59,10 +74,44 @@ export default {
         ...data,
       });
     },
+    removeWorkspaceMember: async (
+      _: unknown,
+      args: { workspaceId?: string; email?: string },
+      { user }: { user?: User },
+    ) => {
+      if (!user) throw AppException.unauthenticated();
+      checkUserStatus({
+        user,
+        requiredRole: [UserRole.USER],
+      });
 
-    // removeWorkspaceMember: () => {},
-    // updateWorkspaceMemberRole: () => {},
-    // getWorkspace: () => {},
+      const data = validate(workspaceMemberRemoveSchema, args);
+
+      await workspaceService.removeWorkspaceMember({
+        currentUser: user,
+        ...data,
+      });
+
+      return true;
+    },
+    updateWorkspaceMemberRole: async (
+      _: unknown,
+      args: { workspaceId?: string; email?: string; role?: WorkspaceRole },
+      { user }: { user?: User },
+    ) => {
+      if (!user) throw AppException.unauthenticated();
+      checkUserStatus({
+        user,
+        requiredRole: [UserRole.USER],
+      });
+
+      const data = validate(workspaceMemberUpdateRoleSchema, args);
+
+      return await workspaceService.updateWorkspaceMemberRole({
+        currentUser: user,
+        ...data,
+      });
+    },
     // getAllWorkspaces: () => {},
   },
 };
