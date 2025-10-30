@@ -1,7 +1,7 @@
 import { User, UserRole } from '@/types';
 import { AppException } from '@libs/exceptions/app-exception';
 import * as userService from '@services/user-service';
-import { checkUserPermissions } from '@utils/check-permissions';
+import { checkUserStatus } from '@utils/check-user-status';
 import { registerUserSchema } from '@utils/validation/auth';
 import validate from '@utils/validation/validate';
 
@@ -21,7 +21,7 @@ const userResolvers = {
       const userCanCheckProfile =
         currentUser.role === UserRole.ADMIN || currentUser.id === args.userId;
 
-      checkUserPermissions({
+      checkUserStatus({
         user: currentUser,
         requiredRole: [UserRole.ADMIN, UserRole.USER],
         extraConditions: userCanCheckProfile,

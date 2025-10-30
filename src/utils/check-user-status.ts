@@ -2,8 +2,8 @@ import { User, UserRole, UserStatus } from '@/types';
 import { AppException } from '@libs/exceptions/app-exception';
 import Logger from '@libs/logger';
 
-type CheckUserPermissions = {
-  /** The user object to check permissions for */
+type CheckUserStatus = {
+  /** The user object to check status for */
   user: User;
   /** List of required roles for the user */
   requiredRole: UserRole[];
@@ -16,14 +16,14 @@ type CheckUserPermissions = {
 };
 
 /**
- * Check user permissions. Checks if the user is active, has the required role,
- * and passes any extra conditions.
+ * Check if the user is active, has the required role, and passes any extra
+ * conditions.
  */
-export function checkUserPermissions({
+export function checkUserStatus({
   user,
   requiredRole = [UserRole.USER],
   extraConditions,
-}: CheckUserPermissions) {
+}: CheckUserStatus) {
   Logger.debug('checkUserPermissions', { user, requiredRole, extraConditions });
 
   if (
