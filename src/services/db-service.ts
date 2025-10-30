@@ -1,5 +1,5 @@
 import { db } from '@libs/db';
-import { sql } from 'bun';
+import { SQL, sql } from 'bun';
 
 export async function getById<T>(id: string | number) {
   const result = await db<T[]>`SELECT * FROM users WHERE id = ${id}`;
@@ -43,4 +43,9 @@ export async function remove<T>(table: string, id: string | number) {
   >`DELETE FROM ${sql(table)} WHERE id = ${id} RETURNING *`;
 
   return result[0];
+}
+
+export async function raw<T>(query: SQL.Query<T>) {
+  const result = await db<T[]>`${query}`;
+  return result;
 }

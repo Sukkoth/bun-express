@@ -95,7 +95,7 @@ export function generateTokens(user: User) {
 
   const accessToken = jwtUtils.generateToken({
     payload,
-    expiresIn: env.NODE_ENV !== 'production' ? '15m' : '6h',
+    expiresIn: env.NODE_ENV !== 'production' ? '6h' : '15m',
   });
 
   const refreshToken = jwtUtils.generateToken({

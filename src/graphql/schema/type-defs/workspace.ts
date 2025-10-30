@@ -17,10 +17,10 @@ export default gql`
     VIEWER
   }
 
-  # type Query {
-  #   getWorkspace(id: ID!): Workspace
-  #   getAllWorkspaces: [Workspace!]!
-  # }
+  type Query {
+    getWorkspace(id: ID!): Workspace
+    #   getAllWorkspaces: [Workspace!]!
+  }
 
   type Mutation {
     createWorkspace(name: String!, description: String): Workspace!

@@ -1,10 +1,12 @@
 import { safeCall } from '@utils/safe-call';
 import { WorkspaceCreateSchema } from '@utils/validation/workspace';
 import * as dbService from '@services/db-service';
-import { Workspace, WorkspaceMembership, WorkspaceRole } from '@/types';
+import { User, Workspace, WorkspaceMembership, WorkspaceRole } from '@/types';
 import Logger from '@libs/logger';
 import { AppException } from '@libs/exceptions/app-exception';
 import { randomUUIDv7 } from 'bun';
+import { sql } from 'bun';
+import { checkWorkspacePermission } from '@utils/check-workspace-permission';
 
 type CreateWorkspaceProps = {
   userId: string;
@@ -61,4 +63,86 @@ export async function createWorkspace({
   });
 
   return data;
+}
+
+export async function getWorkspaceMembershipForUser({
+  userId,
+  workspaceId,
+}: {
+  userId: string;
+  workspaceId: string;
+}) {
+  const [error, data] = await safeCall(() =>
+    dbService.raw<WorkspaceMembership>(
+      sql`SELECT * FROM workspace_memberships WHERE "userId" = ${userId} AND "workspaceId" = ${workspaceId}`,
+    ),
+  );
+
+  if (error) {
+    Logger.error({
+      message: 'Failed to get workspace membership',
+      error,
+    });
+    throw AppException.internalServerError({
+      message: 'Failed to get workspace membership',
+    });
+  }
+
+  Logger.info({
+    message: 'Workspace membership retrieved',
+    workspaceId,
+    userId,
+    membershipInfo: data?.[0],
+  });
+
+  return data?.[0];
+}
+
+type GetWorkspaceByIdProps = {
+  user: User;
+  workspaceId: string;
+};
+
+export async function getWorkspaceById({
+  user,
+  workspaceId,
+}: GetWorkspaceByIdProps) {
+  const [error, data] = await safeCall(() =>
+    dbService.getByField<Workspace[]>('workspaces', 'id', workspaceId),
+  );
+
+  Logger.info({
+    message: 'Workspace retrieved',
+    workspaceId,
+    data: data?.[0],
+  });
+
+  const workspaceMembership = await getWorkspaceMembershipForUser({
+    userId: user.id,
+    workspaceId,
+  });
+
+  checkWorkspacePermission({
+    user,
+    membership: workspaceMembership,
+    action: 'read',
+  });
+
+  if (error) {
+    Logger.error({
+      message: 'Failed to get workspace',
+      error,
+    });
+    throw AppException.internalServerError({
+      message: 'Failed to get workspace',
+    });
+  }
+
+  Logger.info({
+    message: 'Workspace retrieved successfully',
+    workspaceId,
+    data: data[0],
+  });
+
+  return data[0];
 }
