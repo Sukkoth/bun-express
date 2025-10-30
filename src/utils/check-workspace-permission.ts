@@ -48,15 +48,15 @@ const workspacePermissions: Record<
 > = {
   [WorkspaceRole.VIEWER]: {
     actions: ['read'],
-    entities: ['Workspace', 'Project', 'Task', 'Member'],
+    entities: ['Workspace'],
   },
   [WorkspaceRole.MEMBER]: {
     actions: ['read'],
-    entities: ['Workspace', 'Project', 'Task', 'Member'],
+    entities: ['Workspace'],
   },
   [WorkspaceRole.OWNER]: {
     actions: ['create', 'read', 'update', 'delete'],
-    entities: ['Workspace', 'Project', 'Task', 'Member'],
+    entities: ['Workspace', 'Member'],
   },
 
   ['NONE']: {
