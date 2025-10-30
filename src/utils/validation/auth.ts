@@ -32,6 +32,11 @@ export const adminUpdateUserStatusSchema = z.object({
   status: z.nativeEnum(UserStatus),
 });
 
+export const adminResetPasswordForUserSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6).max(100),
+});
+
 export type RegisterSchema = z.infer<typeof registerUserSchema>;
 
 export type LoginSchema = z.infer<typeof loginUserSchema>;
@@ -44,4 +49,8 @@ export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;
 
 export type AdminUpdateUserStatusSchema = z.infer<
   typeof adminUpdateUserStatusSchema
+>;
+
+export type AdminResetPasswordForUserSchema = z.infer<
+  typeof adminResetPasswordForUserSchema
 >;

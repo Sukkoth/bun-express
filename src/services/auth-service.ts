@@ -1,4 +1,5 @@
 import {
+  AdminResetPasswordForUserSchema,
   AdminUpdateUserStatusSchema,
   jwtPayloadSchema,
   LoginSchema,
@@ -269,6 +270,43 @@ export async function resetPassword({ token, password }: ResetPasswordProps) {
   Logger.info({
     message: 'Password reset successful',
     user,
+  });
+}
+
+export async function adminResetPasswordForUser({
+  email,
+  password,
+  resetBy,
+}: AdminResetPasswordForUserSchema & {
+  resetBy: string;
+}) {
+  const [error, data] = await safeCall(() => userService.getByField({ email }));
+
+  if (error) {
+    Logger.error({
+      message: 'Error fetching user',
+      email,
+      error,
+    });
+    throw AppException.internalServerError({ message: 'Something went wrong' });
+  }
+
+  if (!data || !data?.[0]) {
+    Logger.error({
+      message: 'User not found',
+      email,
+    });
+    throw AppException.notFound({ message: 'User not found' });
+  }
+
+  const hashedPassword = encryption.hash(password);
+
+  userService.updateUser(data[0].id, { password: hashedPassword });
+
+  Logger.info({
+    message: 'Password reset for user by admin',
+    userEmail: data[0].email,
+    resetBy,
   });
 }
 

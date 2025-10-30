@@ -23,9 +23,19 @@ export default gql`
     email: String!
   }
 
+  type AdminResetPasswordResponse {
+    success: Boolean!
+    message: String!
+    email: String!
+  }
+
   type Mutation {
     forgotPassword(email: String!): ForgotPasswordResponse!
     resetPassword(token: String!, password: String!): ResetPasswordResponse!
     updateUserStatus(email: String!, status: UserStatus!): BanUserResponse!
+    adminResetPasswordForUser(
+      email: String!
+      password: String!
+    ): AdminResetPasswordResponse!
   }
 `;

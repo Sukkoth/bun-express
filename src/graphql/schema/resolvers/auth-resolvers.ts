@@ -3,6 +3,7 @@ import { AppException } from '@libs/exceptions/app-exception';
 import * as authService from '@services/auth-service';
 import { checkUserPermissions } from '@utils/check-permissions';
 import {
+  adminResetPasswordForUserSchema,
   adminUpdateUserStatusSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -52,6 +53,29 @@ export default {
         success: true,
         message: 'User status updated successfully',
         status: data.status,
+        email: data.email,
+      };
+    },
+    adminResetPasswordForUser: async (
+      _: unknown,
+      args: { email?: string; password?: string },
+      { user }: { user?: User },
+    ) => {
+      if (!user) throw AppException.unauthenticated();
+
+      checkUserPermissions({ user, requiredRole: [UserRole.ADMIN] });
+
+      const data = validate(adminResetPasswordForUserSchema, args);
+
+      await authService.adminResetPasswordForUser({
+        email: data.email,
+        password: data.password,
+        resetBy: user.id,
+      });
+
+      return {
+        success: true,
+        message: 'User password reset successfully',
         email: data.email,
       };
     },
