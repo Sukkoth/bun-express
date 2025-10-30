@@ -1,4 +1,4 @@
-import morgan, { token } from 'morgan';
+import morgan from 'morgan';
 import Logger from '@libs/logger';
 import { env } from '@libs/configs';
 
