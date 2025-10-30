@@ -15,6 +15,7 @@ import { safeCall } from '@utils/safe-call';
 import * as emailService from '@services/email-service';
 import * as dbService from '@services/db-service';
 import { checkUserPermissions } from '@utils/check-permissions';
+import { env } from '@libs/configs';
 
 export async function login({ email, password }: LoginSchema) {
   const user = (await userService.getByField({ email }))?.[0];
@@ -94,7 +95,7 @@ export function generateTokens(user: User) {
 
   const accessToken = jwtUtils.generateToken({
     payload,
-    expiresIn: '15m',
+    expiresIn: env.NODE_ENV !== 'production' ? '15m' : '6h',
   });
 
   const refreshToken = jwtUtils.generateToken({

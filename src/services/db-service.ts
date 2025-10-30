@@ -17,7 +17,7 @@ export async function getByField<T>(
   return result;
 }
 
-export async function insert<T>(table: string, data: object) {
+export async function insert<T>(table: string, data: Partial<T>) {
   const result = await db<
     T[]
   >`INSERT INTO ${sql(table)} ${sql(data)} RETURNING *`;
