@@ -35,6 +35,7 @@
  */
 
 import { z } from 'zod';
+import 'dotenv/config';
 
 export const envSchema = z.object({
   /** The environment the app is running in. */
@@ -47,9 +48,7 @@ export const envSchema = z.object({
   DATABASE_URL: z
     .string()
     .url()
-    .default(
-      'postgres://postgres:postgres@localhost:5432/challenge_dev?schema=public',
-    ),
+    .default('postgres://postgres:postgres@localhost:5432/challenge_dev'),
   JWT_SECRET: z
     .string({ required_error: 'JWT_SECRET is required' })
     .min(10, 'JWT_SECRET must be at least 10 characters long'),
@@ -67,6 +66,16 @@ export const envSchema = z.object({
     .min(10, 'ENCRYPTION_IV must be at least 10 characters long'),
 
   HASH_SALT: z.coerce.number().min(10, 'HASH_SALT is required').default(10),
+
+  BREVO_API_KEY: z.string({
+    required_error: 'BREVO_API_KEY is required',
+  }),
+
+  BREVO_SENDER_EMAIL: z
+    .string({
+      required_error: 'BREVO_SENDER_EMAIL is required',
+    })
+    .email(),
 });
 
 // Validate and parse process.env at runtime

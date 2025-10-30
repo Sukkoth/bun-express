@@ -1,5 +1,6 @@
-import morgan from 'morgan';
+import morgan, { token } from 'morgan';
 import Logger from '@libs/logger';
+import { env } from '@libs/configs';
 
 /**
  * Morgan middleware with custom format and logger
@@ -22,6 +23,12 @@ import Logger from '@libs/logger';
 
 const morganMiddleware = morgan(
   function (tokens, req, res) {
+    if (
+      env.NODE_ENV !== 'production' &&
+      tokens?.url(req, res) === '/graphql?Query'
+    ) {
+      return;
+    }
     return JSON.stringify({
       method: tokens.method(req, res),
       url: tokens.url(req, res),
