@@ -5,6 +5,7 @@ import * as projectService from '@services/project-service';
 import {
   createProjectSchema,
   getProjectByIdSchema,
+  updateProjectSchema,
 } from '@utils/validation/project';
 
 export default {
@@ -35,6 +36,32 @@ export default {
       return await projectService.createProject({
         currentUser: user,
         ...data,
+      });
+    },
+    updateProject: async (
+      _: unknown,
+      args: { id: string; title?: string; description?: string },
+      { user }: { user?: User },
+    ) => {
+      if (!user) throw AppException.unauthenticated();
+
+      const data = validate(updateProjectSchema, args);
+      return await projectService.updateProject({
+        currentUser: user,
+        ...data,
+      });
+    },
+    deleteProject: async (
+      _: unknown,
+      args: { id: string },
+      { user }: { user?: User },
+    ) => {
+      if (!user) throw AppException.unauthenticated();
+
+      const { id } = validate(getProjectByIdSchema, args);
+      return await projectService.deleteProject({
+        currentUser: user,
+        id,
       });
     },
   },

@@ -35,5 +35,7 @@ export default gql`
       description: String
       workspaceId: String
     ): Project!
+    deleteProject(id: String!): Project!
+    updateProject(id: String!, title: String, description: String): Project!
   }
 `;
