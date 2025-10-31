@@ -49,15 +49,7 @@ A backend application built with Bun, Express, and GraphQL, featuring authentica
    - `ENCRYPTION_KEY` & `ENCRYPTION_IV` - Encryption credentials
    - Other environment-specific settings
 
-4. **Set up the database**
-
-   ```bash
-   # Using Docker Compose
-   docker-compose up postgres -d
-
-   # Or use your local PostgreSQL instance
-   # Make sure the database specified in DATABASE_URL exists
-   ```
+4. **Database** - Setup postgres database and put the url string in `.env`
 
 ## Running the Application
 
