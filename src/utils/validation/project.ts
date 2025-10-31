@@ -6,4 +6,15 @@ export const createProjectSchema = z.object({
   description: z.string().optional(),
 });
 
+export const getProjectByIdSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export const updateProjectSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().min(4).optional(),
+  description: z.string().optional(),
+});
+
 export type CreateProjectSchema = z.infer<typeof createProjectSchema>;
+export type UpdateProjectSchema = z.infer<typeof updateProjectSchema>;
