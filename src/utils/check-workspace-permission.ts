@@ -14,16 +14,14 @@ type CheckWorkspacePermissionProps = {
 
 export function checkWorkspacePermission(args: CheckWorkspacePermissionProps) {
   const userRole = args?.membership?.role || 'NONE';
+  const permissions = workspacePermissions[userRole] || [];
 
-  const permittedActions = workspacePermissions[userRole].actions.includes(
-    args.action,
+  const hasPermission = permissions.some(
+    (perm) =>
+      perm.entities.includes(args.entity) && perm.actions.includes(args.action),
   );
 
-  const permittedEntities = workspacePermissions[userRole].entities.includes(
-    args.entity,
-  );
-
-  if (!permittedActions || !permittedEntities) {
+  if (!hasPermission) {
     Logger.error({
       message: 'User is not authorized to perform the action',
       user: {
@@ -44,23 +42,35 @@ export function checkWorkspacePermission(args: CheckWorkspacePermissionProps) {
 
 const workspacePermissions: Record<
   WorkspaceRole | 'NONE',
-  { actions: WorkspaceActions[]; entities: Entities[] }
+  { actions: WorkspaceActions[]; entities: Entities[] }[]
 > = {
-  [WorkspaceRole.VIEWER]: {
-    actions: ['read'],
-    entities: ['Workspace'],
-  },
-  [WorkspaceRole.MEMBER]: {
-    actions: ['read'],
-    entities: ['Workspace'],
-  },
-  [WorkspaceRole.OWNER]: {
-    actions: ['create', 'read', 'update', 'delete'],
-    entities: ['Workspace', 'Member'],
-  },
+  [WorkspaceRole.VIEWER]: [
+    {
+      actions: ['read'],
+      entities: ['Workspace'],
+    },
+  ],
+  [WorkspaceRole.MEMBER]: [
+    {
+      actions: ['read'],
+      entities: ['Workspace'],
+    },
+    {
+      actions: ['create', 'read', 'update', 'delete'],
+      entities: ['Project'],
+    },
+  ],
+  [WorkspaceRole.OWNER]: [
+    {
+      actions: ['create', 'read', 'update', 'delete'],
+      entities: ['Workspace', 'Member', 'Project'],
+    },
+  ],
 
-  ['NONE']: {
-    actions: [],
-    entities: [],
-  },
+  ['NONE']: [
+    {
+      actions: [],
+      entities: [],
+    },
+  ],
 };
