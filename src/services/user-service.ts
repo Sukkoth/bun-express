@@ -114,3 +114,18 @@ export async function updateUser(id: string | number, data: Partial<User>) {
 
   return result;
 }
+
+export async function getUserByEmail(email: string) {
+  const user = (await dbService.getByField<User>('users', 'email', email))?.[0];
+
+  if (!user) {
+    Logger.error({
+      message: 'User not found',
+      email,
+    });
+    throw AppException.badRequest({
+      message: 'User not found',
+    });
+  }
+  return user;
+}

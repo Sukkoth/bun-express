@@ -12,7 +12,10 @@ import { AppException } from '@libs/exceptions/app-exception';
 import { randomUUIDv7 } from 'bun';
 import { sql } from 'bun';
 import { checkWorkspacePermission } from '@utils/check-workspace-permission';
-import { getByField as getUserByField } from './user-service';
+import {
+  getUserByEmail,
+  getByField as getUserByField,
+} from '@services/user-service';
 
 type CreateWorkspaceProps = {
   userId: string;
@@ -347,19 +350,4 @@ export async function getAllWorkspaces() {
   });
 
   return workspaces;
-}
-
-async function getUserByEmail(email: string) {
-  const user = (await getUserByField({ email }))?.[0];
-
-  if (!user) {
-    Logger.error({
-      message: 'User not found',
-      email,
-    });
-    throw AppException.badRequest({
-      message: 'User not found',
-    });
-  }
-  return user;
 }

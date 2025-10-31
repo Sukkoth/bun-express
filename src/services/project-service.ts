@@ -99,3 +99,98 @@ export async function getProjectById({
 
   return project;
 }
+
+export async function updateProject({
+  currentUser,
+  id,
+  title,
+  description,
+}: {
+  currentUser: User;
+  id: string;
+  title?: string;
+  description?: string;
+}) {
+  const project = await getProjectById({ currentUser, id });
+
+  const workspaceMembership = await getWorkspaceMembershipForUser({
+    userId: currentUser.id,
+    workspaceId: project.workspaceId,
+  });
+
+  checkWorkspacePermission({
+    user: currentUser,
+    action: 'update',
+    entity: 'Project',
+    membership: workspaceMembership,
+  });
+
+  const [error, data] = await safeCall(() =>
+    dbService.update<Project>('projects', id, {
+      title,
+      description,
+    }),
+  );
+
+  if (error) {
+    Logger.error({
+      message: 'Could not update project',
+      error,
+    });
+    throw AppException.internalServerError({
+      message: 'Project could not be updated',
+    });
+  }
+
+  Logger.info({
+    message: 'Project Updated',
+    project: data,
+    updatedBy: currentUser.email,
+  });
+
+  return data;
+}
+
+export async function deleteProject({
+  currentUser,
+  id,
+}: {
+  currentUser: User;
+  id: string;
+}) {
+  const project = await getProjectById({ currentUser, id });
+
+  const workspaceMembership = await getWorkspaceMembershipForUser({
+    userId: currentUser.id,
+    workspaceId: project.workspaceId,
+  });
+
+  checkWorkspacePermission({
+    user: currentUser,
+    action: 'delete',
+    entity: 'Project',
+    membership: workspaceMembership,
+  });
+
+  const [error, data] = await safeCall(() =>
+    dbService.remove<Project>('projects', id),
+  );
+
+  if (error) {
+    Logger.error({
+      message: 'Could not delete project',
+      error,
+    });
+    throw AppException.internalServerError({
+      message: 'Project could not be deleted',
+    });
+  }
+
+  Logger.info({
+    message: 'Project Deleted',
+    project: data,
+    deletedBy: currentUser.email,
+  });
+
+  return data;
+}
