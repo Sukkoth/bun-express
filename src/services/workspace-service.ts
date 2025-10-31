@@ -125,9 +125,9 @@ type GetWorkspaceByIdProps = {
 export async function getWorkspaceById({
   user,
   workspaceId,
-}: GetWorkspaceByIdProps) {
+}: GetWorkspaceByIdProps): Promise<Workspace> {
   const [error, data] = await safeCall(() =>
-    dbService.getByField<Workspace[]>('workspaces', 'id', workspaceId),
+    dbService.getByField<Workspace>('workspaces', 'id', workspaceId),
   );
 
   if (error) {
