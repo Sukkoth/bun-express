@@ -1,6 +1,6 @@
 # Challenge
 
-A modern Node.js backend application built with Bun, Express, and GraphQL, featuring authentication, workspace management, and project organization capabilities.
+A backend application built with Bun, Express, and GraphQL, featuring authentication, workspace management, and project organization capabilities.
 
 ## Features
 
