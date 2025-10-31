@@ -1,9 +1,14 @@
-import { User, WorkspaceMembership, WorkspaceRole } from '@/types';
+import { ProjectRole, User, WorkspaceMembership, WorkspaceRole } from '@/types';
 import { AppException } from '@libs/exceptions/app-exception';
 import Logger from '@libs/logger';
 
 export type WorkspaceActions = 'create' | 'read' | 'update' | 'delete';
-export type Entities = 'Workspace' | 'Project' | 'Task' | 'Member';
+export type Entities =
+  | 'Workspace'
+  | 'Project'
+  | 'Task'
+  | 'Member'
+  | 'ProjectMember';
 
 type CheckWorkspacePermissionProps = {
   user: User;
@@ -41,7 +46,7 @@ export function checkWorkspacePermission(args: CheckWorkspacePermissionProps) {
 }
 
 const workspacePermissions: Record<
-  WorkspaceRole | 'NONE',
+  WorkspaceRole | ProjectRole | 'NONE',
   { actions: WorkspaceActions[]; entities: Entities[] }[]
 > = {
   [WorkspaceRole.VIEWER]: [
@@ -63,10 +68,29 @@ const workspacePermissions: Record<
   [WorkspaceRole.OWNER]: [
     {
       actions: ['create', 'read', 'update', 'delete'],
-      entities: ['Workspace', 'Member', 'Project'],
+      entities: ['Workspace', 'Member', 'Project', 'ProjectMember'],
     },
   ],
-
+  [ProjectRole.LEAD]: [
+    {
+      actions: ['read'],
+      entities: ['Workspace', 'Project', 'Member', 'ProjectMember'],
+    },
+    {
+      actions: ['create', 'update', 'delete'],
+      entities: ['Task', 'ProjectMember'],
+    },
+  ],
+  [ProjectRole.CONTRIBUTOR]: [
+    {
+      actions: ['read', 'create', 'update', 'delete'],
+      entities: ['Task'],
+    },
+    {
+      actions: ['read'],
+      entities: ['Project'],
+    },
+  ],
   ['NONE']: [
     {
       actions: [],
