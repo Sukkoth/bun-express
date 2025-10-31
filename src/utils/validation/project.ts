@@ -1,3 +1,4 @@
+import { ProjectRole } from '@/types';
 import { z } from 'zod';
 
 export const createProjectSchema = z.object({
@@ -16,5 +17,14 @@ export const updateProjectSchema = z.object({
   description: z.string().optional(),
 });
 
+export const assignProjectMembershipSchema = z.object({
+  projectId: z.string().uuid(),
+  email: z.string().email(),
+  role: z.nativeEnum(ProjectRole),
+});
+
 export type CreateProjectSchema = z.infer<typeof createProjectSchema>;
 export type UpdateProjectSchema = z.infer<typeof updateProjectSchema>;
+export type AssignProjectMembershipSchema = z.infer<
+  typeof assignProjectMembershipSchema
+>;
