@@ -25,6 +25,10 @@ export default gql`
     role: ProjectRole
   }
 
+  type Query {
+    getProjectById(id: String!): Project!
+  }
+
   type Mutation {
     createProject(
       title: String!

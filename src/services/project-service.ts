@@ -55,3 +55,47 @@ export async function createProject({
 
   return data;
 }
+
+export async function getProjectById({
+  currentUser,
+  id,
+}: {
+  currentUser: User;
+  id: string;
+}) {
+  const [error, data] = await safeCall(() =>
+    dbService.getByField<Project>('projects', 'id', id),
+  );
+
+  if (error) {
+    Logger.error({
+      message: 'Could not get project',
+      error,
+    });
+    throw AppException.internalServerError({
+      message: 'Project could not be retrieved',
+    });
+  }
+
+  const project = data[0];
+
+  Logger.info({
+    message: 'Project Retrieved',
+    project,
+    createdBy: currentUser.email,
+  });
+
+  const workspaceMembership = await getWorkspaceMembershipForUser({
+    userId: currentUser.id,
+    workspaceId: project.workspaceId,
+  });
+
+  checkWorkspacePermission({
+    user: currentUser,
+    action: 'read',
+    entity: 'Project',
+    membership: workspaceMembership,
+  });
+
+  return project;
+}
